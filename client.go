@@ -30,6 +30,7 @@ type gcmClient struct {
 	mh      MessageHandler
 	cerr    chan error
 	sandbox bool
+	fcm     bool
 	debug   bool
 	// Clients.
 	xmppClient xmppC
@@ -49,14 +50,12 @@ func NewClient(config *Config, h MessageHandler) (Client, error) {
 		return nil, errors.New("config is nil")
 	case h == nil:
 		return nil, errors.New("message handler is nil")
-	case config.SenderID == "":
-		return nil, errors.New("empty sender id")
 	case config.APIKey == "":
 		return nil, errors.New("empty api key")
 	}
 
 	// Create GCM XMPP client.
-	xmppc, err := newXMPPClient(config.Sandbox, config.SenderID, config.APIKey, config.Debug)
+	xmppc, err := newXMPPClient(config.Sandbox, config.UseFCM, config.SenderID, config.APIKey, config.Debug)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +114,7 @@ func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*
 		mh:           h,
 		debug:        config.Debug,
 		sandbox:      config.Sandbox,
+		fcm:          config.UseFCM,
 		pingInterval: time.Duration(config.PingInterval) * time.Second,
 		pingTimeout:  time.Duration(config.PingTimeout) * time.Second,
 	}
@@ -162,7 +162,7 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 
 		// Create XMPP client.
 		log.WithField("sender id", c.senderID).Debug("creating gcm xmpp client")
-		xmppc, err := connectXMPP(xc, c.sandbox, c.senderID, c.apiKey,
+		xmppc, err := connectXMPP(xc, c.sandbox, c.fcm, c.senderID, c.apiKey,
 			c.onCCSMessage, cerr, c.debug)
 		if err != nil {
 			if firstRun {
@@ -245,7 +245,7 @@ func (c *gcmClient) onCCSMessage(cm CCSMessage) error {
 }
 
 // Creates a new xmpp client (if not provided), connects to the server and starts listening.
-func connectXMPP(c xmppC, isSandbox bool, senderID string, apiKey string,
+func connectXMPP(c xmppC, isSandbox bool, useFCM bool, senderID string, apiKey string,
 	h MessageHandler, cerr chan<- error, debug bool) (xmppC, error) {
 	var xmppc xmppC
 	if c != nil {
@@ -254,7 +254,7 @@ func connectXMPP(c xmppC, isSandbox bool, senderID string, apiKey string,
 	} else {
 		// Create new.
 		var err error
-		xmppc, err = newXMPPClient(isSandbox, senderID, apiKey, debug)
+		xmppc, err = newXMPPClient(isSandbox, useFCM, senderID, apiKey, debug)
 		if err != nil {
 			cerr <- err
 			return nil, err
