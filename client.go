@@ -131,27 +131,25 @@ func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*
 		c.pingTimeout = DefaultPingTimeout
 	}
 
+	clientIsConnected := make(chan bool, 1)
 	if xmppc != nil {
 		// Create and monitor XMPP client.
-		go c.monitorXMPP(config.MonitorConnection)
+		go c.monitorXMPP(config.MonitorConnection, clientIsConnected)
 	}
 
-	// Wait a bit to see if the newly created client is ok.
-	// TODO: find a better way (success notification, etc).
 	select {
 	case err := <-c.cerr:
 		return nil, err
-	case <-time.After(time.Second): // TODO: configurable
-		// Looks good.
+	case <-clientIsConnected:
+		return c, nil
+	case <-time.After(10 * time.Second):
+		return nil, errors.New("Timed out attempting to connect client")
 	}
-
-	return c, nil
-
 }
 
 // monitorXMPP creates a new GCM XMPP client (if not provided), replaces the active client,
 // closes the old client and starts monitoring the new connection.
-func (c *gcmClient) monitorXMPP(activeMonitor bool) {
+func (c *gcmClient) monitorXMPP(activeMonitor bool, clientIsConnected chan bool) {
 	firstRun := true
 	for {
 		var (
@@ -189,6 +187,9 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 		// New GCM XMPP client created and connected.
 		if firstRun {
 			l.Info("gcm xmpp client created")
+			// Wait just a tick to ensure Listen got called
+			time.Sleep(2 * time.Millisecond)
+			clientIsConnected <- true
 		} else {
 			// Replace the active client.
 			c.Lock()
