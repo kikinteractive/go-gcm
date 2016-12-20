@@ -145,7 +145,9 @@ func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
 	// Parse response if appicable.
 	if len(body) > 0 {
 		if debug {
-			log.WithField("http reply", string(body)).Debug("gcm http reply")
+			log.WithFields(
+				log.Fields{"http reply": string(body), "status code": httpResp.StatusCode},
+			).Debug("gcm http reply")
 		}
 		err = json.Unmarshal(body, gcmResp)
 	}
