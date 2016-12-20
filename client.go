@@ -131,8 +131,10 @@ func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*
 		c.pingTimeout = DefaultPingTimeout
 	}
 
-	// Create and monitor XMPP client.
-	go c.monitorXMPP(config.MonitorConnection)
+	if xmppc != nil {
+		// Create and monitor XMPP client.
+		go c.monitorXMPP(config.MonitorConnection)
+	}
 
 	// Wait a bit to see if the newly created client is ok.
 	// TODO: find a better way (success notification, etc).
