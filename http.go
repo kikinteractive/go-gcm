@@ -71,7 +71,7 @@ func (c *gcmHTTP) Send(m HTTPMessage) (*HTTPResponse, error) {
 				b.wait()
 				continue
 			}
-			return nil, err
+			return gcmResp, err
 		}
 		if len(gcmResp.Results) > 0 {
 			multicastID = gcmResp.MulticastID
