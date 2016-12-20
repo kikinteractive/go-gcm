@@ -43,7 +43,7 @@ type gcmClient struct {
 	pingTimeout  time.Duration
 }
 
-// NewClient creates a new GCM client for this senderID.
+// NewClient creates a new GCM client for these credentials.
 func NewClient(config *Config, h MessageHandler) (Client, error) {
 	switch {
 	case config == nil:
@@ -54,14 +54,20 @@ func NewClient(config *Config, h MessageHandler) (Client, error) {
 		return nil, errors.New("empty api key")
 	}
 
-	// Create GCM XMPP client.
-	xmppc, err := newXMPPClient(config.Sandbox, config.UseFCM, config.SenderID, config.APIKey, config.Debug)
-	if err != nil {
-		return nil, err
-	}
+	useHTTPOnly := config.SenderID == ""
 
 	// Create GCM HTTP client.
 	httpc := newHTTPClient(config.APIKey, config.Debug)
+
+	var xmppc xmppC
+	var err error
+	if !useHTTPOnly {
+		// Create GCM XMPP client.
+		xmppc, err = newXMPPClient(config.Sandbox, config.UseFCM, config.SenderID, config.APIKey, config.Debug)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	// Construct GCM client.
 	return newGCMClient(xmppc, httpc, config, h)
