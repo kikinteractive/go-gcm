@@ -149,7 +149,10 @@ func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
 				log.Fields{"http reply": string(body), "status code": httpResp.StatusCode},
 			).Debug("gcm http reply")
 		}
-		err = json.Unmarshal(body, gcmResp)
+		// Valid response body is guaranteed to exist only with response status 200.
+		if httpResp.StatusCode == http.StatusOK {
+			err = json.Unmarshal(body, gcmResp)
+		}
 	}
 
 	return
