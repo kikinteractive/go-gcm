@@ -32,7 +32,7 @@ type HTTPMessage struct {
 
 // HTTPResponse is the GCM connection server response to an HTTP downstream message.
 type HTTPResponse struct {
-	StatusCode   int          `json:"-"`
+	StatusCode   int          `json:"status,omitempty"`
 	MulticastID  int64        `json:"multicast_id,omitempty"`
 	Success      uint         `json:"success,omitempty"`
 	Failure      uint         `json:"failure,omitempty"`
