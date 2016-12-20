@@ -43,8 +43,6 @@ var _ = Describe("GCM Client", func() {
 			Entry("it should fail on nil config", nil, nil, "config is nil"),
 			Entry("it should fail on nil message handler",
 				&Config{}, nil, "message handler is nil"),
-			Entry("it should fail on empty sender id",
-				&Config{}, func(cm CCSMessage) error { return nil }, "empty sender id"),
 			Entry("it should fail on empty api key",
 				&Config{SenderID: "123"}, func(cm CCSMessage) error { return nil }, "empty api key"),
 			Entry("it should fail on wrong credentials",

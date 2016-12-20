@@ -88,6 +88,7 @@ type Notification struct {
 type Config struct {
 	SenderID          string `json:"sender_id"`
 	APIKey            string `json:"api_key"`
+	UseFCM            bool   `json:"use_fcm"`
 	Sandbox           bool   `json:"sandbox"`
 	MonitorConnection bool   `json:"monitor_connection"`
 	Debug             bool   `json:"debug"`
