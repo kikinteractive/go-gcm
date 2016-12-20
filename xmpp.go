@@ -101,7 +101,7 @@ type messageLogEntry struct {
 
 // newXMPPClient creates a new client for GCM XMPP Server (CCS).
 func newXMPPClient(isSandbox bool, useFCM bool, senderID string, apiKey string, debug bool) (xmppC, error) {
-	var xmppHost, xmppAddress string
+	var xmppHost, xmppAddress, ccsHostForUser string
 	if useFCM {
 		xmppHost = fcmHost
 	} else {
@@ -113,11 +113,13 @@ func newXMPPClient(isSandbox bool, useFCM bool, senderID string, apiKey string, 
 	}
 	if isSandbox {
 		xmppAddress = net.JoinHostPort(xmppHost, ccsPortDev)
+		ccsHostForUser = ccsHostDev
 	} else {
 		xmppAddress = net.JoinHostPort(xmppHost, ccsPortDev)
+		ccsHostForUser = ccsHostProd
 	}
 
-	nc, err := xmpp.NewClient(xmppAddress, xmppUser(xmppHost, senderID), apiKey, debug)
+	nc, err := xmpp.NewClient(xmppAddress, xmppUser(ccsHostForUser, senderID), apiKey, debug)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting gcm xmpp client: %v", err)
 	}
