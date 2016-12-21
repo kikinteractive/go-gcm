@@ -187,8 +187,12 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool, clientIsConnected chan bool)
 		// New GCM XMPP client created and connected.
 		if firstRun {
 			l.Info("gcm xmpp client created")
-			// Wait just a tick to ensure Listen got called
-			time.Sleep(2 * time.Millisecond)
+			// Wait just a tick to ensure Listen got called - without this there's probably an edge-case where if the
+			// threading happens exactly wrong you can create a client, return it, and push out a send before you start
+			// listening for its response and therefore you miss the response.  Given network latency that would probably
+			// not ever happen but just to be paranoid... this also ensures that the tests (which assert that Listen got
+			// called) reliably pass.
+			time.Sleep(time.Millisecond)
 			clientIsConnected <- true
 		} else {
 			// Replace the active client.
