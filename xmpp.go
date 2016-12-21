@@ -115,7 +115,7 @@ func newXMPPClient(isSandbox bool, useFCM bool, senderID string, apiKey string, 
 		xmppAddress = net.JoinHostPort(xmppHost, ccsPortDev)
 		ccsHostForUser = ccsHostDev
 	} else {
-		xmppAddress = net.JoinHostPort(xmppHost, ccsPortDev)
+		xmppAddress = net.JoinHostPort(xmppHost, ccsPortProd)
 		ccsHostForUser = ccsHostProd
 	}
 
