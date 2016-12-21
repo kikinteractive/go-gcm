@@ -45,6 +45,7 @@ const (
 	ccsPortProd = "5235"
 	ccsHostDev  = "gcm-preprod.googleapis.com"
 	ccsPortDev  = "5236"
+	fcmHost     = "fcm-xmpp.googleapis.com"
 
 	// For CCS the min for exponential backoff has to be 1 sec
 	ccsMinBackoff = 1 * time.Second
@@ -99,17 +100,26 @@ type messageLogEntry struct {
 }
 
 // newXMPPClient creates a new client for GCM XMPP Server (CCS).
-func newXMPPClient(isSandbox bool, senderID string, apiKey string, debug bool) (xmppC, error) {
-	var xmppHost, xmppAddress string
-	if isSandbox {
-		xmppHost = ccsHostDev
-		xmppAddress = net.JoinHostPort(ccsHostDev, ccsPortDev)
+func newXMPPClient(isSandbox bool, useFCM bool, senderID string, apiKey string, debug bool) (xmppC, error) {
+	var xmppHost, xmppAddress, ccsHostForUser string
+	if useFCM {
+		xmppHost = fcmHost
 	} else {
-		xmppHost = ccsHostProd
-		xmppAddress = net.JoinHostPort(ccsHostProd, ccsPortProd)
+		if isSandbox {
+			xmppHost = ccsHostDev
+		} else {
+			xmppHost = ccsHostProd
+		}
+	}
+	if isSandbox {
+		xmppAddress = net.JoinHostPort(xmppHost, ccsPortDev)
+		ccsHostForUser = ccsHostDev
+	} else {
+		xmppAddress = net.JoinHostPort(xmppHost, ccsPortDev)
+		ccsHostForUser = ccsHostProd
 	}
 
-	nc, err := xmpp.NewClient(xmppAddress, xmppUser(xmppHost, senderID), apiKey, debug)
+	nc, err := xmpp.NewClient(xmppAddress, xmppUser(ccsHostForUser, senderID), apiKey, debug)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting gcm xmpp client: %v", err)
 	}

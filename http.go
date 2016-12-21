@@ -71,7 +71,7 @@ func (c *gcmHTTP) Send(m HTTPMessage) (*HTTPResponse, error) {
 				b.wait()
 				continue
 			}
-			return nil, err
+			return gcmResp, err
 		}
 		if len(gcmResp.Results) > 0 {
 			multicastID = gcmResp.MulticastID
@@ -134,20 +134,24 @@ func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
 	// TODO(silvano): this is assuming that the header contains seconds instead of a date, need to check
 	retryAfter = httpResp.Header.Get(http.CanonicalHeaderKey("Retry-After"))
 
-	// Read response. Valid response body is guaranteed to exist only with response status 200.
-	var body []byte
-	if body, err = ioutil.ReadAll(httpResp.Body); err != nil && httpResp.StatusCode == http.StatusOK {
+	// Read response.
+	body, err := ioutil.ReadAll(httpResp.Body)
+	defer httpResp.Body.Close()
+	if err != nil {
 		err = fmt.Errorf("error reading http response body: %v", err)
 		return
 	}
-	defer httpResp.Body.Close()
-
-	// Parse response if appicable.
 	if len(body) > 0 {
 		if debug {
-			log.WithField("http reply", string(body)).Debug("gcm http reply")
+			log.WithFields(
+				log.Fields{"http reply": string(body), "status code": httpResp.StatusCode},
+			).Debug("gcm http reply")
 		}
 		err = json.Unmarshal(body, gcmResp)
+		if err != nil {
+			err = fmt.Errorf("error unmarshaling json from body: %v", err)
+			return
+		}
 	}
 
 	return
