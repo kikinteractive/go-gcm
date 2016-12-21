@@ -135,15 +135,16 @@ func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*
 	if xmppc != nil {
 		// Create and monitor XMPP client.
 		go c.monitorXMPP(config.MonitorConnection, clientIsConnected)
-	}
-
-	select {
-	case err := <-c.cerr:
-		return nil, err
-	case <-clientIsConnected:
+		select {
+		case err := <-c.cerr:
+			return nil, err
+		case <-clientIsConnected:
+			return c, nil
+		case <-time.After(10 * time.Second):
+			return nil, errors.New("Timed out attempting to connect client")
+		}
+	} else {
 		return c, nil
-	case <-time.After(10 * time.Second):
-		return nil, errors.New("Timed out attempting to connect client")
 	}
 }
 
