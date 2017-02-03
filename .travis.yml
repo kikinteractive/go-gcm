@@ -2,16 +2,30 @@ language: go
 go: 
  - 1.5
  - 1.6
+ - 1.7
  - tip
 
+env:
+  global:
+    - GO15VENDOREXPERIMENT=1
+
 before_install:
-  - go get golang.org/x/tools/cmd/cover
+
+  # go vendoring - glide
+  - go get -v -u github.com/Masterminds/glide
+
+  # coverage
+  - go get -v -u golang.org/x/tools/cmd/cover
+
+install:
+  - glide install
 
 script:
-  - go test -coverprofile=coverage.txt ./
+  - ./go-test.sh
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash) 
+  # test, collect coverage info and send to codecov
+  - bash <(curl -s https://codecov.io/bash)
 
 
 

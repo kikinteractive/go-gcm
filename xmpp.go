@@ -313,7 +313,7 @@ func (c *gcmXMPP) Listen(h MessageHandler) error {
 }
 
 // TODO(silvano): add flow control (max 100 pending messages at one time)
-// gcmXMPP implementation to send a message through Gcm Xmpp server (ccs).
+// gcmXMPP implementation to send a message through GCM XMPP server (CCS).
 func (c *gcmXMPP) Send(m XMPPMessage) (string, int, error) {
 	if m.MessageID == "" {
 		m.MessageID = uuid.New()
