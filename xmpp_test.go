@@ -9,7 +9,6 @@ import (
 
 	"github.com/Appboy/go-gcm/mocks"
 	"github.com/mattn/go-xmpp"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

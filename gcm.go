@@ -22,7 +22,6 @@ type HTTPMessage struct {
 	CollapseKey           string        `json:"collapse_key,omitempty"`
 	Priority              string        `json:"priority,omitempty"`
 	ContentAvailable      bool          `json:"content_available,omitempty"`
-	DelayWhileIdle        bool          `json:"delay_while_idle,omitempty"`
 	TimeToLive            *uint         `json:"time_to_live,omitempty"`
 	RestrictedPackageName string        `json:"restricted_package_name,omitempty"`
 	DryRun                bool          `json:"dry_run,omitempty"`
@@ -33,13 +32,14 @@ type HTTPMessage struct {
 // HTTPResponse is the GCM connection server response to an HTTP downstream message.
 type HTTPResponse struct {
 	StatusCode   int
-	MulticastID  int64        `json:"multicast_id,omitempty"`
-	Success      uint         `json:"success,omitempty"`
-	Failure      uint         `json:"failure,omitempty"`
-	CanonicalIds uint         `json:"canonical_ids,omitempty"`
+	MulticastID  int64        `json:"multicast_id"`
+	Success      uint         `json:"success"`
+	Failure      uint         `json:"failure"`
+	CanonicalIds uint         `json:"canonical_ids"`
 	Results      []HTTPResult `json:"results,omitempty"`
-	MessageID    uint         `json:"message_id,omitempty"`
-	Error        string       `json:"error,omitempty"`
+	// Topic message HTTP response only.
+	MessageID uint   `json:"message_id,omitempty"`
+	Error     string `json:"error,omitempty"`
 }
 
 // HTTPResult represents the result of a single processed HTTP request.
@@ -57,7 +57,6 @@ type XMPPMessage struct {
 	CollapseKey              string        `json:"collapse_key,omitempty"`
 	Priority                 string        `json:"priority,omitempty"`
 	ContentAvailable         bool          `json:"content_available,omitempty"`
-	DelayWhileIdle           bool          `json:"delay_while_idle,omitempty"`
 	TimeToLive               *uint         `json:"time_to_live,omitempty"`
 	DeliveryReceiptRequested bool          `json:"delivery_receipt_requested,omitempty"`
 	DryRun                   bool          `json:"dry_run,omitempty"`
@@ -69,19 +68,25 @@ type XMPPMessage struct {
 type Data map[string]interface{}
 
 // Notification defines the notification payload of a GCM message.
+// NOTE: contains keys for both Android and iOS notifications.
 type Notification struct {
+	// Common fields.
 	Title        string `json:"title,omitempty"`
 	Body         string `json:"body,omitempty"`
-	Icon         string `json:"icon,omitempty"`
 	Sound        string `json:"sound,omitempty"`
-	Badge        string `json:"badge,omitempty"`
-	Tag          string `json:"tag,omitempty"`
-	Color        string `json:"color,omitempty"`
 	ClickAction  string `json:"click_action,omitempty"`
 	BodyLocKey   string `json:"body_loc_key,omitempty"`
 	BodyLocArgs  string `json:"body_loc_args,omitempty"`
-	TitleLocArgs string `json:"title_loc_args,omitempty"`
 	TitleLocKey  string `json:"title_loc_key,omitempty"`
+	TitleLocArgs string `json:"title_loc_args,omitempty"`
+
+	// Android-only fields.
+	Icon  string `json:"icon,omitempty"`
+	Tag   string `json:"tag,omitempty"`
+	Color string `json:"color,omitempty"`
+
+	// iOS-only fields
+	Badge string `json:"badge,omitempty"`
 }
 
 // Config is a container for GCM client configuration data.

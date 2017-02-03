@@ -188,6 +188,8 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool, clientIsConnected chan bool)
 		// New GCM XMPP client created and connected.
 		if firstRun {
 			l.Info("gcm xmpp client created")
+			firstRun = false
+
 			// Wait just a tick to ensure Listen got called - without this there's probably an edge-case where if the
 			// threading happens exactly wrong you can create a client, return it, and push out a send before you start
 			// listening for its response and therefore you miss the response.  Given network latency that would probably
@@ -220,8 +222,6 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool, clientIsConnected chan bool)
 			}(xmppc, cerr)
 			l.Debug("gcm xmpp connection monitoring started")
 		}
-
-		firstRun = false
 
 		// Wait for an error to occur (from listen, ping or upstream control).
 		if err = <-cerr; err == nil {

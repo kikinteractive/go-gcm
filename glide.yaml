@@ -1,0 +1,19 @@
+package: github.com/Appboy/go-gcm
+import:
+- package: github.com/Sirupsen/logrus
+  version: ^0.11.0
+- package: github.com/alecthomas/kingpin
+  version: ^2.2.3
+- package: github.com/aliafshar/toylog
+- package: github.com/jpillora/backoff
+- package: github.com/mattn/go-xmpp
+- package: github.com/pborman/uuid
+  version: ^1.0.0
+testImport:
+- package: github.com/stretchr/testify
+  subpackages:
+  - mock
+- package: github.com/onsi/ginkgo
+  subpackages:
+  - extensions/table
+- package: github.com/onsi/gomega
