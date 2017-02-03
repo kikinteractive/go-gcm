@@ -30,6 +30,7 @@ type gcmClient struct {
 	mh      MessageHandler
 	cerr    chan error
 	sandbox bool
+	fcm     bool
 	debug   bool
 	// Clients.
 	xmppClient xmppC
@@ -42,27 +43,31 @@ type gcmClient struct {
 	pingTimeout  time.Duration
 }
 
-// NewClient creates a new GCM client for this senderID.
+// NewClient creates a new GCM client for these credentials.
 func NewClient(config *Config, h MessageHandler) (Client, error) {
 	switch {
 	case config == nil:
 		return nil, errors.New("config is nil")
 	case h == nil:
 		return nil, errors.New("message handler is nil")
-	case config.SenderID == "":
-		return nil, errors.New("empty sender id")
 	case config.APIKey == "":
 		return nil, errors.New("empty api key")
 	}
 
-	// Create GCM XMPP client.
-	xmppc, err := newXMPPClient(config.Sandbox, config.SenderID, config.APIKey, config.Debug)
-	if err != nil {
-		return nil, err
-	}
+	useHTTPOnly := config.SenderID == ""
 
 	// Create GCM HTTP client.
 	httpc := newHTTPClient(config.APIKey, config.Debug)
+
+	var xmppc xmppC
+	var err error
+	if !useHTTPOnly {
+		// Create GCM XMPP client.
+		xmppc, err = newXMPPClient(config.Sandbox, config.UseFCM, config.SenderID, config.APIKey, config.Debug)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	// Construct GCM client.
 	return newGCMClient(xmppc, httpc, config, h)
@@ -115,6 +120,7 @@ func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*
 		mh:           h,
 		debug:        config.Debug,
 		sandbox:      config.Sandbox,
+		fcm:          config.UseFCM,
 		pingInterval: time.Duration(config.PingInterval) * time.Second,
 		pingTimeout:  time.Duration(config.PingTimeout) * time.Second,
 	}
@@ -125,25 +131,26 @@ func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*
 		c.pingTimeout = DefaultPingTimeout
 	}
 
-	// Create and monitor XMPP client.
-	go c.monitorXMPP(config.MonitorConnection)
-
-	// Wait a bit to see if the newly created client is ok.
-	// TODO: find a better way (success notification, etc).
-	select {
-	case err := <-c.cerr:
-		return nil, err
-	case <-time.After(time.Second): // TODO: configurable
-		// Looks good.
+	clientIsConnected := make(chan bool, 1)
+	if xmppc != nil {
+		// Create and monitor XMPP client.
+		go c.monitorXMPP(config.MonitorConnection, clientIsConnected)
+		select {
+		case err := <-c.cerr:
+			return nil, err
+		case <-clientIsConnected:
+			return c, nil
+		case <-time.After(10 * time.Second):
+			return nil, errors.New("Timed out attempting to connect client")
+		}
+	} else {
+		return c, nil
 	}
-
-	return c, nil
-
 }
 
 // monitorXMPP creates a new GCM XMPP client (if not provided), replaces the active client,
 // closes the old client and starts monitoring the new connection.
-func (c *gcmClient) monitorXMPP(activeMonitor bool) {
+func (c *gcmClient) monitorXMPP(activeMonitor bool, clientIsConnected chan bool) {
 	firstRun := true
 	for {
 		var (
@@ -162,7 +169,7 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 
 		// Create XMPP client.
 		log.WithField("sender id", c.senderID).Debug("creating gcm xmpp client")
-		xmppc, err := connectXMPP(xc, c.sandbox, c.senderID, c.apiKey,
+		xmppc, err := connectXMPP(xc, c.sandbox, c.fcm, c.senderID, c.apiKey,
 			c.onCCSMessage, cerr, c.debug)
 		if err != nil {
 			if firstRun {
@@ -182,6 +189,14 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 		if firstRun {
 			l.Info("gcm xmpp client created")
 			firstRun = false
+
+			// Wait just a tick to ensure Listen got called - without this there's probably an edge-case where if the
+			// threading happens exactly wrong you can create a client, return it, and push out a send before you start
+			// listening for its response and therefore you miss the response.  Given network latency that would probably
+			// not ever happen but just to be paranoid... this also ensures that the tests (which assert that Listen got
+			// called) reliably pass.
+			time.Sleep(time.Millisecond)
+			clientIsConnected <- true
 		} else {
 			// Replace the active client.
 			c.Lock()
@@ -244,7 +259,7 @@ func (c *gcmClient) onCCSMessage(cm CCSMessage) error {
 }
 
 // Creates a new xmpp client (if not provided), connects to the server and starts listening.
-func connectXMPP(c xmppC, isSandbox bool, senderID string, apiKey string,
+func connectXMPP(c xmppC, isSandbox bool, useFCM bool, senderID string, apiKey string,
 	h MessageHandler, cerr chan<- error, debug bool) (xmppC, error) {
 	var xmppc xmppC
 	if c != nil {
@@ -253,7 +268,7 @@ func connectXMPP(c xmppC, isSandbox bool, senderID string, apiKey string,
 	} else {
 		// Create new.
 		var err error
-		xmppc, err = newXMPPClient(isSandbox, senderID, apiKey, debug)
+		xmppc, err = newXMPPClient(isSandbox, useFCM, senderID, apiKey, debug)
 		if err != nil {
 			cerr <- err
 			return nil, err

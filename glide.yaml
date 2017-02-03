@@ -1,4 +1,4 @@
-package: github.com/kikinteractive/go-gcm
+package: github.com/Appboy/go-gcm
 import:
 - package: github.com/Sirupsen/logrus
   version: ^0.11.0
