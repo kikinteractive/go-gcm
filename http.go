@@ -169,7 +169,7 @@ func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
 		}
 		err = json.Unmarshal(body, gcmResp)
 		if err != nil {
-			err = fmt.Errorf("error unmarshaling json from body: %v", err)
+			err = fmt.Errorf("error unmarshaling json from body %s: %v", body, err)
 			return
 		}
 	}
