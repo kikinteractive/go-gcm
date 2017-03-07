@@ -138,7 +138,7 @@ func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
 	body, err := ioutil.ReadAll(httpResp.Body)
 	defer httpResp.Body.Close()
 	if err != nil {
-		err = fmt.Errorf("error reading http response body %v", err)
+		err = fmt.Errorf("error reading http response body: %v", err)
 		return
 	}
 	if len(body) > 0 {
