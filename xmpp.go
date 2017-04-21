@@ -2,9 +2,11 @@
 package gcm
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -119,7 +121,21 @@ func newXMPPClient(isSandbox bool, useFCM bool, senderID string, apiKey string, 
 		ccsHostForUser = ccsHostProd
 	}
 
-	nc, err := xmpp.NewClient(xmppAddress, xmppUser(ccsHostForUser, senderID), apiKey, debug)
+	tlsConfigXMPPAddress := xmppAddress
+	if strings.LastIndex(tlsConfigXMPPAddress, ":") > 0 {
+		tlsConfigXMPPAddress = tlsConfigXMPPAddress[:strings.LastIndex(tlsConfigXMPPAddress, ":")]
+	}
+	opts := xmpp.Options{
+		Host:     xmppAddress,
+		User:     xmppUser(ccsHostForUser, senderID),
+		Password: apiKey,
+		Debug:    debug,
+		Session:  false,
+		TLSConfig: &tls.Config{
+			ServerName: tlsConfigXMPPAddress,
+		},
+	}
+	nc, err := opts.NewClient()
 	if err != nil {
 		return nil, fmt.Errorf("error connecting gcm xmpp client: %v", err)
 	}
