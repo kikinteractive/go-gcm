@@ -121,6 +121,8 @@ func newXMPPClient(isSandbox bool, useFCM bool, senderID string, apiKey string, 
 		ccsHostForUser = ccsHostProd
 	}
 
+	// Create our own xmpp.Options and use opts.NewClient() instead of xmpp.NewClient() to work around
+	// https://github.com/mattn/go-xmpp/issues/85
 	tlsConfigXMPPAddress := xmppAddress
 	if strings.LastIndex(tlsConfigXMPPAddress, ":") > 0 {
 		tlsConfigXMPPAddress = tlsConfigXMPPAddress[:strings.LastIndex(tlsConfigXMPPAddress, ":")]
