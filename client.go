@@ -132,15 +132,18 @@ func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*
 	}
 
 	clientIsConnected := make(chan bool, 1)
+	killMonitor := make(chan bool, 1)
 	if xmppc != nil {
 		// Create and monitor XMPP client.
-		go c.monitorXMPP(config.MonitorConnection, clientIsConnected)
+		go c.monitorXMPP(config.MonitorConnection, clientIsConnected, killMonitor)
 		select {
 		case err := <-c.cerr:
+			killMonitor <- true
 			return nil, err
 		case <-clientIsConnected:
 			return c, nil
 		case <-time.After(10 * time.Second):
+			killMonitor <- true
 			return nil, errors.New("Timed out attempting to connect client")
 		}
 	} else {
@@ -150,7 +153,7 @@ func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*
 
 // monitorXMPP creates a new GCM XMPP client (if not provided), replaces the active client,
 // closes the old client and starts monitoring the new connection.
-func (c *gcmClient) monitorXMPP(activeMonitor bool, clientIsConnected chan bool) {
+func (c *gcmClient) monitorXMPP(activeMonitor bool, clientIsConnected chan bool, killMonitor chan bool) {
 	firstRun := true
 	for {
 		var (
@@ -165,6 +168,15 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool, clientIsConnected chan bool)
 		} else {
 			xc = nil
 			cerr = make(chan error)
+		}
+
+		// If we've been asked to kill the monitor (ie cerr happened during first run and was returned to caller), don't
+		// loop around anymore. This is what the "on the first run, error exits the monitor" code above is supposed to
+		// handle, but doesn't in edge cases because of concurrency
+		select {
+		case <-killMonitor:
+			return
+		default:
 		}
 
 		// Create XMPP client.
