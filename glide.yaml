@@ -7,6 +7,7 @@ import:
 - package: github.com/aliafshar/toylog
 - package: github.com/jpillora/backoff
 - package: github.com/mattn/go-xmpp
+  version: master
 - package: github.com/pborman/uuid
   version: ^1.0.0
 testImport:

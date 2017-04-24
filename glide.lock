@@ -1,8 +1,8 @@
-hash: 48d05bb1e6b3fe80cb8b6e9fb9db9d74ab25bf8659b1145e7fe1977af15346cb
-updated: 2017-01-30T14:54:05.243815415+02:00
+hash: 6b7784aefc04fc1ab46e34bfe4f072fc8b17ab758ec18eea716fdf7bcf0afcf7
+updated: 2017-04-24T17:04:18.083707264-04:00
 imports:
 - name: github.com/alecthomas/kingpin
-  version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
+  version: 7f0871f2e17818990e4eed73f9b5c2f429501228
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
   subpackages:
@@ -12,13 +12,13 @@ imports:
 - name: github.com/aliafshar/toylog
   version: 11d228569d74fd7a2c9d50016043ccc31e6832ed
 - name: github.com/davecgh/go-spew
-  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/jpillora/backoff
-  version: f24585d1c70490c0920ab34924f54f726e1416c7
+  version: a6f64285fd4072883335339357436b78d62c96a4
 - name: github.com/mattn/go-xmpp
-  version: 325c112042ffd34aa24365590d3a6fdd1a79c011
+  version: 906d9d747d2b4c59e60104678b62e464dd1623cf
 - name: github.com/pborman/uuid
   version: a97ce2ca70fa5a848076093f05e639a89ca34d06
 - name: github.com/pmezard/go-difflib
@@ -26,11 +26,11 @@ imports:
   subpackages:
   - difflib
 - name: github.com/Sirupsen/logrus
-  version: d26492970760ca5d33129d2d799e34be5c4782eb
+  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
-  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - mock
