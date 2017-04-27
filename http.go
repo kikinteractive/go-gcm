@@ -4,6 +4,7 @@ package gcm
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -69,7 +70,7 @@ func (c *gcmHTTP) Send(m HTTPMessage) (*HTTPResponse, error) {
 				b.wait()
 				continue
 			}
-			return nil, err
+			return gcmResp, err
 		}
 		if len(gcmResp.Results) > 0 {
 			multicastID = gcmResp.MulticastID
@@ -107,8 +108,8 @@ func parseRetryAfter(retryAfter string) (time.Duration, error) {
 	// W3 spec, section 14.37:
 	// Retry-After  = "Retry-After" ":" ( HTTP-date | delta-seconds )
 	// Examples:
-        // Retry-After: Fri, 31 Dec 1999 23:59:59 GMT
-        // Retry-After: 120
+	// Retry-After: Fri, 31 Dec 1999 23:59:59 GMT
+	// Retry-After: 120
 	// Assuming that the header contains seconds instead of a date
 
 	// Try parsing seconds first:
@@ -153,23 +154,30 @@ func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
 	gcmResp = &HTTPResponse{StatusCode: httpResp.StatusCode}
 	retryAfter, err = parseRetryAfter(httpResp.Header.Get(http.CanonicalHeaderKey("Retry-After")))
 
-	// Read response. Valid response body is guaranteed to exist only with response status 200.
-	var body []byte
-	if body, err = ioutil.ReadAll(httpResp.Body); err != nil && httpResp.StatusCode == http.StatusOK {
+	// Read response.
+	body, err := ioutil.ReadAll(httpResp.Body)
+	defer httpResp.Body.Close()
+	if err != nil {
 		err = fmt.Errorf("error reading http response body: %v", err)
 		return
 	}
-	defer httpResp.Body.Close()
-
-	// Parse response if appicable.
 	if len(body) > 0 {
 		if debug {
 			log.WithFields(log.Fields{
 				"status": httpResp.StatusCode,
-				"body": string(body),
+				"body":   string(body),
 			}).Debug("gcm http reply")
 		}
-		err = json.Unmarshal(body, gcmResp)
+		// Valid response body is guaranteed to exist only with response status 200
+		if httpResp.StatusCode == http.StatusOK {
+			err = json.Unmarshal(body, gcmResp)
+			if err != nil {
+				err = fmt.Errorf("error unmarshaling json from body %s: %v", body, err)
+				return
+			}
+		} else {
+			err = errors.New(string(body))
+		}
 	}
 
 	return

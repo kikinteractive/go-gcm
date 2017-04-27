@@ -9,13 +9,13 @@ import (
 	"github.com/alecthomas/kingpin"
 	"github.com/aliafshar/toylog"
 
-	"github.com/kikinteractive/go-gcm"
+	"github.com/Appboy/go-gcm"
 )
 
 var (
 	serverKey = kingpin.Flag("server_key", "The server key to use for GCM.").Short('k').Required().String()
 	senderId  = kingpin.Flag("sender_id", "The sender ID to use for GCM.").Short('s').Required().String()
-	g gcm.Client
+	g         gcm.Client
 )
 
 // onMessage receives messages, logs them, and echoes a response.

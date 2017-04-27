@@ -24,7 +24,7 @@ This is a rework of [go-gcm library](https://github.com/google/go-gcm). It has t
 * improved logging with [logrus](https://github.com/Sirupsen/logrus)
 * [ginkgo](https://onsi.github.io/ginkgo/) tests
 * various govet/golint fixes
-* automatic builds with [Travis][travis] and coverage with [Codecov][codecov] 
+* automatic builds with [Travis][travis] and coverage with [Codecov][codecov]
 
 This library is in Beta. We will make an effort to support the library, but we reserve the right to make incompatible changes when necessary.
 
