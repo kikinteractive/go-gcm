@@ -4,6 +4,7 @@ package gcm
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -167,10 +168,15 @@ func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
 				"body":   string(body),
 			}).Debug("gcm http reply")
 		}
-		err = json.Unmarshal(body, gcmResp)
-		if err != nil {
-			err = fmt.Errorf("error unmarshaling json from body %s: %v", body, err)
-			return
+		// Valid response body is guaranteed to exist only with response status 200
+		if httpResp.StatusCode == http.StatusOK {
+			err = json.Unmarshal(body, gcmResp)
+			if err != nil {
+				err = fmt.Errorf("error unmarshaling json from body %s: %v", body, err)
+				return
+			}
+		} else {
+			err = errors.New(string(body))
 		}
 	}
 
