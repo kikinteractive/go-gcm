@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -141,6 +142,12 @@ var _ = Describe("HTTP Client", func() {
 			json.Unmarshal([]byte(expectedResp), &expResp)
 			Expect(authHeader).To(Equal("key=apiKey"))
 			Expect(resp).To(Equal(&expResp))
+		})
+	})
+
+	Context("parseRetryAfter", func() {
+		It("should parse 10 correctly", func() {
+			Expect(parseRetryAfter("10")).To(Equal(time.Second * 10))
 		})
 	})
 })

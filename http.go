@@ -112,7 +112,7 @@ func parseRetryAfter(retryAfter string) (time.Duration, error) {
 	// Assuming that the header contains seconds instead of a date
 
 	// Try parsing seconds first:
-	if d, err := time.ParseDuration(retryAfter); err == nil {
+	if d, err := time.ParseDuration(fmt.Sprintf("%vs", retryAfter)); err == nil {
 		return d, nil
 	}
 
