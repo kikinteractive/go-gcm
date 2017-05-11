@@ -43,8 +43,6 @@ var _ = Describe("GCM Client", func() {
 			Entry("it should fail on nil config", nil, nil, "config is nil"),
 			Entry("it should fail on nil message handler",
 				&Config{}, nil, "message handler is nil"),
-			Entry("it should fail on empty sender id",
-				&Config{}, func(cm CCSMessage) error { return nil }, "empty sender id"),
 			Entry("it should fail on empty api key",
 				&Config{SenderID: "123"}, func(cm CCSMessage) error { return nil }, "empty api key"),
 			Entry("it should fail on wrong credentials",
@@ -121,7 +119,7 @@ var _ = Describe("GCM Client", func() {
 			xm.On("ID").Return("id")
 			xm.On("Listen", mock.AnythingOfType("gcm.MessageHandler")).
 				Return(errors.New("Listen"))
-			go c.monitorXMPP(false)
+			go c.monitorXMPP(false, make(chan bool, 1), make(chan bool, 1))
 			err := <-c.cerr
 			Expect(err).To(MatchError("Listen"))
 		})

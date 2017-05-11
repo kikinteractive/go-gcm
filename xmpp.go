@@ -2,9 +2,11 @@
 package gcm
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -45,6 +47,7 @@ const (
 	ccsPortProd = "5235"
 	ccsHostDev  = "gcm-preprod.googleapis.com"
 	ccsPortDev  = "5236"
+	fcmHost     = "fcm-xmpp.googleapis.com"
 
 	// For CCS the min for exponential backoff has to be 1 sec
 	ccsMinBackoff = 1 * time.Second
@@ -99,17 +102,42 @@ type messageLogEntry struct {
 }
 
 // newXMPPClient creates a new client for GCM XMPP Server (CCS).
-func newXMPPClient(isSandbox bool, senderID string, apiKey string, debug bool) (xmppC, error) {
-	var xmppHost, xmppAddress string
-	if isSandbox {
-		xmppHost = ccsHostDev
-		xmppAddress = net.JoinHostPort(ccsHostDev, ccsPortDev)
+func newXMPPClient(isSandbox bool, useFCM bool, senderID string, apiKey string, debug bool) (xmppC, error) {
+	var xmppHost, xmppAddress, ccsHostForUser string
+	if useFCM {
+		xmppHost = fcmHost
 	} else {
-		xmppHost = ccsHostProd
-		xmppAddress = net.JoinHostPort(ccsHostProd, ccsPortProd)
+		if isSandbox {
+			xmppHost = ccsHostDev
+		} else {
+			xmppHost = ccsHostProd
+		}
+	}
+	if isSandbox {
+		xmppAddress = net.JoinHostPort(xmppHost, ccsPortDev)
+		ccsHostForUser = ccsHostDev
+	} else {
+		xmppAddress = net.JoinHostPort(xmppHost, ccsPortProd)
+		ccsHostForUser = ccsHostProd
 	}
 
-	nc, err := xmpp.NewClient(xmppAddress, xmppUser(xmppHost, senderID), apiKey, debug)
+	// Create our own xmpp.Options and use opts.NewClient() instead of xmpp.NewClient() to work around
+	// https://github.com/mattn/go-xmpp/issues/85
+	tlsConfigXMPPAddress := xmppAddress
+	if strings.LastIndex(tlsConfigXMPPAddress, ":") > 0 {
+		tlsConfigXMPPAddress = tlsConfigXMPPAddress[:strings.LastIndex(tlsConfigXMPPAddress, ":")]
+	}
+	opts := xmpp.Options{
+		Host:     xmppAddress,
+		User:     xmppUser(ccsHostForUser, senderID),
+		Password: apiKey,
+		Debug:    debug,
+		Session:  false,
+		TLSConfig: &tls.Config{
+			ServerName: tlsConfigXMPPAddress,
+		},
+	}
+	nc, err := opts.NewClient()
 	if err != nil {
 		return nil, fmt.Errorf("error connecting gcm xmpp client: %v", err)
 	}

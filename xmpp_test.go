@@ -7,10 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Appboy/go-gcm/mocks"
 	"github.com/mattn/go-xmpp"
-
-	"github.com/kikinteractive/go-gcm/mocks"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -23,7 +21,7 @@ func getMsgStr(msg *XMPPMessage) string {
 var _ = Describe("GCM XMPP Client", func() {
 	Describe("initializing", func() {
 		It("should fail to initialize due to connect error", func() {
-			c, err := newXMPPClient(false, "sender id", "api key", false)
+			c, err := newXMPPClient(false, false, "sender id", "api key", false)
 			Expect(err).To(HaveOccurred())
 			Expect(c).To(BeNil())
 			Expect(err.Error()).To(HavePrefix("error connecting gcm xmpp client: auth failure"))

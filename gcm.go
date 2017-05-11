@@ -22,6 +22,7 @@ type HTTPMessage struct {
 	CollapseKey           string        `json:"collapse_key,omitempty"`
 	Priority              string        `json:"priority,omitempty"`
 	ContentAvailable      bool          `json:"content_available,omitempty"`
+	MutableContent        bool          `json:"mutable_content,omitempty"`
 	TimeToLive            *uint         `json:"time_to_live,omitempty"`
 	RestrictedPackageName string        `json:"restricted_package_name,omitempty"`
 	DryRun                bool          `json:"dry_run,omitempty"`
@@ -31,7 +32,7 @@ type HTTPMessage struct {
 
 // HTTPResponse is the GCM connection server response to an HTTP downstream message.
 type HTTPResponse struct {
-	StatusCode   int          `json:"-"`
+	StatusCode   int
 	MulticastID  int64        `json:"multicast_id"`
 	Success      uint         `json:"success"`
 	Failure      uint         `json:"failure"`
@@ -57,6 +58,7 @@ type XMPPMessage struct {
 	CollapseKey              string        `json:"collapse_key,omitempty"`
 	Priority                 string        `json:"priority,omitempty"`
 	ContentAvailable         bool          `json:"content_available,omitempty"`
+	MutableContent           bool          `json:"mutable_content,omitempty"`
 	TimeToLive               *uint         `json:"time_to_live,omitempty"`
 	DeliveryReceiptRequested bool          `json:"delivery_receipt_requested,omitempty"`
 	DryRun                   bool          `json:"dry_run,omitempty"`
@@ -93,6 +95,7 @@ type Notification struct {
 type Config struct {
 	SenderID          string `json:"sender_id"`
 	APIKey            string `json:"api_key"`
+	UseFCM            bool   `json:"use_fcm"`
 	Sandbox           bool   `json:"sandbox"`
 	MonitorConnection bool   `json:"monitor_connection"`
 	Debug             bool   `json:"debug"`
