@@ -36,10 +36,15 @@ type multicastResultsState map[string]*HTTPResult
 // newHTTPGCMClient creates a new client for handling GCM HTTP requests.
 func newHTTPClient(apiKey string, debug bool) httpC {
 	return &gcmHTTP{
-		GCMURL:     httpAddress,
-		apiKey:     apiKey,
-		httpClient: &http.Client{},
-		debug:      debug,
+		GCMURL: httpAddress,
+		apiKey: apiKey,
+		httpClient: &http.Client{
+			// Hopefully reduce connection resets http://stackoverflow.com/a/31409281/1955935
+			Transport: &http.Transport{
+				MaxIdleConnsPerHost: 24,
+			},
+		},
+		debug: debug,
 	}
 }
 
