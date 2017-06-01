@@ -150,4 +150,10 @@ var _ = Describe("HTTP Client", func() {
 			Expect(resp).To(Equal(&expResp))
 		})
 	})
+
+	Context("parseRetryAfter", func() {
+		It("should parse 10 correctly", func() {
+			Expect(parseRetryAfter("10")).To(Equal(time.Second * 10))
+		})
+	})
 })
