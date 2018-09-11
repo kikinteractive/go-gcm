@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package gcm provides send and receive GCM functionality.
-package gcm
+// Package fcm provides send and receive FCM functionality.
+package fcm
 
-// HTTPMessage defines a downstream GCM HTTP message.
+// HTTPMessage defines a downstream FCM HTTP message.
 type HTTPMessage struct {
 	To                    string        `json:"to,omitempty"`
 	RegistrationIDs       []string      `json:"registration_ids,omitempty"`
@@ -29,7 +29,7 @@ type HTTPMessage struct {
 	Notification          *Notification `json:"notification,omitempty"`
 }
 
-// HTTPResponse is the GCM connection server response to an HTTP downstream message.
+// HTTPResponse is the FCM connection server response to an HTTP downstream message.
 type HTTPResponse struct {
 	StatusCode   int          `json:"-"`
 	MulticastID  int64        `json:"multicast_id"`
@@ -49,7 +49,7 @@ type HTTPResult struct {
 	Error          string `json:"error,omitempty"`
 }
 
-// XMPPMessage defines a downstream GCM XMPP message.
+// XMPPMessage defines a downstream FCM XMPP message.
 type XMPPMessage struct {
 	To                       string        `json:"to,omitempty"`
 	MessageID                string        `json:"message_id"`
@@ -64,10 +64,10 @@ type XMPPMessage struct {
 	Notification             *Notification `json:"notification,omitempty"`
 }
 
-// Data defines the custom payload of a GCM message.
+// Data defines the custom payload of a FCM message.
 type Data map[string]interface{}
 
-// Notification defines the notification payload of a GCM message.
+// Notification defines the notification payload of a FCM message.
 // NOTE: contains keys for both Android and iOS notifications.
 type Notification struct {
 	// Common fields.
@@ -89,7 +89,7 @@ type Notification struct {
 	Badge string `json:"badge,omitempty"`
 }
 
-// Config is a container for GCM client configuration data.
+// Config is a container for FCM client configuration data.
 type Config struct {
 	SenderID          string `json:"sender_id"`
 	APIKey            string `json:"api_key"`
@@ -118,7 +118,7 @@ type CCSMessage struct {
 // MessageHandler is the type for a function that handles a CCS message.
 type MessageHandler func(cm CCSMessage) error
 
-// Client defines an interface for the GCM client.
+// Client defines an interface for the FCM client.
 type Client interface {
 	ID() string
 	SendHTTP(m HTTPMessage) (*HTTPResponse, error)

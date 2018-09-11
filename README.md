@@ -10,7 +10,7 @@ Documentation: [see godoc][godoc]
 
 ## Installation
 
-    $ go get github.com/kikinteractive/go-gcm
+    $ go get github.com/lilichen/go-fcm
 
 ## Status
 
@@ -25,6 +25,7 @@ This is a rework of [go-gcm library](https://github.com/google/go-gcm). It has t
 * [ginkgo](https://onsi.github.io/ginkgo/) tests
 * various govet/golint fixes
 * automatic builds with [Travis][travis] and coverage with [Codecov][codecov] 
+* Replace GCM with FCM protocol
 
 This library is in Beta. We will make an effort to support the library, but we reserve the right to make incompatible changes when necessary.
 
