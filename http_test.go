@@ -1,4 +1,4 @@
-package gcm
+package fcm
 
 import (
 	"encoding/json"
@@ -48,8 +48,8 @@ var _ = Describe("HTTP Client", func() {
 	Context("initializing", func() {
 		It("should init successfully", func() {
 			c := newHTTPClient("key", true)
-			Expect(c).To(BeAssignableToTypeOf(&gcmHTTP{}))
-			gc := c.(*gcmHTTP)
+			Expect(c).To(BeAssignableToTypeOf(&fcmHTTP{}))
+			gc := c.(*fcmHTTP)
 			Expect(gc.apiKey).To(Equal("key"))
 			Expect(gc.httpClient).NotTo(BeNil())
 		})
@@ -129,8 +129,8 @@ var _ = Describe("HTTP Client", func() {
 					return url.Parse(server.URL)
 				},
 			}
-			c = &gcmHTTP{
-				GCMURL:     server.URL,
+			c = &fcmHTTP{
+				FCMURL:     server.URL,
 				apiKey:     "apiKey",
 				httpClient: &http.Client{Transport: transport},
 			}

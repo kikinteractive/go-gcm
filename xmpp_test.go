@@ -1,4 +1,4 @@
-package gcm
+package fcm
 
 import (
 	"encoding/json"
@@ -20,25 +20,25 @@ func getMsgStr(msg *XMPPMessage) string {
 	return fmt.Sprintf(stanzaFmtStr, msg.MessageID, string(msgData))
 }
 
-var _ = Describe("GCM XMPP Client", func() {
+var _ = Describe("FCM XMPP Client", func() {
 	Describe("initializing", func() {
 		It("should fail to initialize due to connect error", func() {
 			c, err := newXMPPClient(false, "sender id", "api key", false)
 			Expect(err).To(HaveOccurred())
 			Expect(c).To(BeNil())
-			Expect(err.Error()).To(HavePrefix("error connecting gcm xmpp client: auth failure"))
+			Expect(err.Error()).To(HavePrefix("error connecting fcm xmpp client: auth failure"))
 		})
 	})
 
 	Context("initialized", func() {
 		var (
 			xm *mocks.XMPPClient
-			c  *gcmXMPP
+			c  *fcmXMPP
 		)
 
 		BeforeEach(func() {
 			xm = new(mocks.XMPPClient)
-			c = &gcmXMPP{xmppClient: xm, pongs: make(chan struct{}, 100)}
+			c = &fcmXMPP{xmppClient: xm, pongs: make(chan struct{}, 100)}
 		})
 
 		AfterEach(func() {
@@ -61,7 +61,7 @@ var _ = Describe("GCM XMPP Client", func() {
 				xm.On("PingC2S", "", "").Return(nil)
 				err := c.Ping(100 * time.Millisecond)
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError("gcm xmpp pong timed out after 100ms"))
+				Expect(err).To(MatchError("fcm xmpp pong timed out after 100ms"))
 			})
 
 			It("should succeed with pong", func() {
@@ -436,7 +436,7 @@ var _ = Describe("GCM XMPP Client", func() {
 
 		Describe("closing", func() {
 			It("should show if closed", func() {
-				cc := &gcmXMPP{closed: true}
+				cc := &fcmXMPP{closed: true}
 				Expect(cc.IsClosed()).To(BeTrue())
 			})
 
@@ -499,18 +499,18 @@ var _ = Describe("GCM XMPP Client", func() {
 
 		Describe("misc", func() {
 			It("should return client id", func() {
-				c := &gcmXMPP{xmppClient: xm}
+				c := &fcmXMPP{xmppClient: xm}
 				Expect(c.ID()).To(Equal(fmt.Sprintf("%p", c)))
 			})
 
 			It("should return client jid", func() {
-				c := &gcmXMPP{xmppClient: xm}
+				c := &fcmXMPP{xmppClient: xm}
 				xm.On("JID").Return("jid")
 				Expect(c.JID()).To(Equal("jid"))
 			})
 
 			It("should return valid xmpp user", func() {
-				Expect(xmppUser("host", "sender")).To(Equal("sender@host"))
+				Expect(xmppUser("sender")).To(Equal("sender@" + ccsHostAuth))
 			})
 		})
 	})

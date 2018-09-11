@@ -1,4 +1,4 @@
-package gcm
+package fcm
 
 import (
 	"errors"
@@ -24,8 +24,8 @@ type xmppC interface {
 	JID() string
 }
 
-// gcmClient is a container for http and xmpp GCM clients.
-type gcmClient struct {
+// fcmClient is a container for http and xmpp FCM clients.
+type fcmClient struct {
 	sync.RWMutex
 	mh      MessageHandler
 	cerr    chan error
@@ -34,7 +34,7 @@ type gcmClient struct {
 	// Clients.
 	xmppClient xmppC
 	httpClient httpC
-	// GCM auth.
+	// FCM auth.
 	senderID string
 	apiKey   string
 	// XMPP config.
@@ -42,7 +42,7 @@ type gcmClient struct {
 	pingTimeout  time.Duration
 }
 
-// NewClient creates a new GCM client for this senderID.
+// NewClient creates a new FCM client for this senderID.
 func NewClient(config *Config, h MessageHandler) (Client, error) {
 	switch {
 	case config == nil:
@@ -55,47 +55,47 @@ func NewClient(config *Config, h MessageHandler) (Client, error) {
 		return nil, errors.New("empty api key")
 	}
 
-	// Create GCM XMPP client.
+	// Create FCM XMPP client.
 	xmppc, err := newXMPPClient(config.Sandbox, config.SenderID, config.APIKey, config.Debug)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create GCM HTTP client.
+	// Create FCM HTTP client.
 	httpc := newHTTPClient(config.APIKey, config.Debug)
 
-	// Construct GCM client.
-	return newGCMClient(xmppc, httpc, config, h)
+	// Construct FCM client.
+	return newFCMClient(xmppc, httpc, config, h)
 }
 
 // ID returns client unique identification.
-func (c *gcmClient) ID() string {
+func (c *fcmClient) ID() string {
 	c.RLock()
 	defer c.RUnlock()
 	return c.xmppClient.ID()
 }
 
 // JID returns client XMPP JID.
-func (c *gcmClient) JID() string {
+func (c *fcmClient) JID() string {
 	c.RLock()
 	defer c.RUnlock()
 	return c.xmppClient.JID()
 }
 
-// SendHTTP sends a message using the HTTP GCM connection server (blocking).
-func (c *gcmClient) SendHTTP(m HTTPMessage) (*HTTPResponse, error) {
+// SendHTTP sends a message using the HTTP FCM connection server (blocking).
+func (c *fcmClient) SendHTTP(m HTTPMessage) (*HTTPResponse, error) {
 	return c.httpClient.Send(m)
 }
 
-// SendXMPP sends a message using the XMPP GCM connection server (blocking).
-func (c *gcmClient) SendXMPP(m XMPPMessage) (string, int, error) {
+// SendXMPP sends a message using the XMPP FCM connection server (blocking).
+func (c *fcmClient) SendXMPP(m XMPPMessage) (string, int, error) {
 	c.RLock()
 	defer c.RUnlock()
 	return c.xmppClient.Send(m)
 }
 
 // Close will stop and close the corresponding client, releasing all resources (blocking).
-func (c *gcmClient) Close() error {
+func (c *fcmClient) Close() error {
 	c.Lock()
 	defer c.Unlock()
 	if c.xmppClient != nil {
@@ -104,9 +104,9 @@ func (c *gcmClient) Close() error {
 	return nil
 }
 
-// newGCMClient creates an instance of gcmClient.
-func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*gcmClient, error) {
-	c := &gcmClient{
+// newFCMClient creates an instance of fcmClient.
+func newFCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*fcmClient, error) {
+	c := &fcmClient{
 		httpClient:   httpc,
 		xmppClient:   xmppc,
 		cerr:         make(chan error, 1),
@@ -141,9 +141,9 @@ func newGCMClient(xmppc xmppC, httpc httpC, config *Config, h MessageHandler) (*
 
 }
 
-// monitorXMPP creates a new GCM XMPP client (if not provided), replaces the active client,
+// monitorXMPP creates a new FCM XMPP client (if not provided), replaces the active client,
 // closes the old client and starts monitoring the new connection.
-func (c *gcmClient) monitorXMPP(activeMonitor bool) {
+func (c *fcmClient) monitorXMPP(activeMonitor bool) {
 	firstRun := true
 	for {
 		var (
@@ -161,7 +161,7 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 		}
 
 		// Create XMPP client.
-		log.WithField("sender id", c.senderID).Debug("creating gcm xmpp client")
+		log.WithField("sender id", c.senderID).Debug("creating fcm xmpp client")
 		xmppc, err := connectXMPP(xc, c.sandbox, c.senderID, c.apiKey,
 			c.onCCSMessage, cerr, c.debug)
 		if err != nil {
@@ -170,7 +170,7 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 				break
 			}
 			log.WithFields(log.Fields{"sender id": c.senderID, "error": err}).
-				Error("connect gcm xmpp client")
+				Error("connect fcm xmpp client")
 			// Otherwise wait and try again.
 			// TODO: remove infinite loop.
 			time.Sleep(c.pingTimeout)
@@ -178,9 +178,9 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 		}
 		l := log.WithField("xmpp client ref", xmppc.ID())
 
-		// New GCM XMPP client created and connected.
+		// New FCM XMPP client created and connected.
 		if firstRun {
-			l.Info("gcm xmpp client created")
+			l.Info("fcm xmpp client created")
 			firstRun = false
 		} else {
 			// Replace the active client.
@@ -190,7 +190,7 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 			c.cerr = cerr
 			c.Unlock()
 			l.WithField("previous xmpp client ref", prevc.ID()).
-				Warn("gcm xmpp client replaced")
+				Warn("fcm xmpp client replaced")
 
 			// Close the previous client.
 			go prevc.Close(true)
@@ -205,7 +205,7 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 					ce <- perr
 				}
 			}(xmppc, cerr)
-			l.Debug("gcm xmpp connection monitoring started")
+			l.Debug("fcm xmpp connection monitoring started")
 		}
 
 		// Wait for an error to occur (from listen, ping or upstream control).
@@ -214,22 +214,22 @@ func (c *gcmClient) monitorXMPP(activeMonitor bool) {
 			break
 		}
 
-		l.WithField("error", err).Error("gcm xmpp connection")
+		l.WithField("error", err).Error("fcm xmpp connection")
 		close(cerr)
 	}
 	log.WithField("sender id", c.senderID).
-		Debug("gcm xmpp connection monitor finished")
+		Debug("fcm xmpp connection monitor finished")
 }
 
 // CCS upstream message callback.
 // Tries to handle what it can here, before bubbling up.
-func (c *gcmClient) onCCSMessage(cm CCSMessage) error {
+func (c *fcmClient) onCCSMessage(cm CCSMessage) error {
 	switch cm.MessageType {
 	case CCSControl:
 		// Handle connection drainging request.
 		if cm.ControlType == CCSDraining {
 			log.WithField("xmpp client ref", c.xmppClient.ID()).
-				Warn("gcm xmpp connection draining requested")
+				Warn("fcm xmpp connection draining requested")
 			// Server should close the current connection.
 			c.Lock()
 			cerr := c.cerr
@@ -264,12 +264,12 @@ func connectXMPP(c xmppC, isSandbox bool, senderID string, apiKey string,
 
 	// Start listening on this connection.
 	go func() {
-		l.Debug("gcm xmpp listen started")
+		l.Debug("fcm xmpp listen started")
 		if err := xmppc.Listen(h); err != nil {
-			l.WithField("error", err).Error("gcm xmpp listen")
+			l.WithField("error", err).Error("fcm xmpp listen")
 			cerr <- err
 		}
-		l.Debug("gcm xmpp listen finished")
+		l.Debug("fcm xmpp listen finished")
 	}()
 
 	return xmppc, nil

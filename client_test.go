@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gcm
+package fcm
 
 import (
 	"errors"
@@ -28,10 +28,10 @@ import (
 
 func TestClient(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "GCM Client")
+	RunSpecs(t, "FCM Client")
 }
 
-var _ = Describe("GCM Client", func() {
+var _ = Describe("FCM Client", func() {
 	Describe("initializing", func() {
 		DescribeTable("wrong initialization parameters",
 			func(config *Config, h MessageHandler, errStr string) {
@@ -49,7 +49,7 @@ var _ = Describe("GCM Client", func() {
 				&Config{SenderID: "123"}, func(cm CCSMessage) error { return nil }, "empty api key"),
 			Entry("it should fail on wrong credentials",
 				&Config{SenderID: "123", APIKey: "key"}, func(cm CCSMessage) error { return nil },
-				"error connecting gcm xmpp client: auth failure: not-authorized"),
+				"error connecting fcm xmpp client: auth failure: not-authorized"),
 		)
 
 		Context("good config", func() {
@@ -71,9 +71,9 @@ var _ = Describe("GCM Client", func() {
 
 			It("should fail on xmpp connection error", func() {
 				xm.On("ID").Return("id")
-				xm.On("Listen", mock.AnythingOfType("gcm.MessageHandler")).
+				xm.On("Listen", mock.AnythingOfType("fcm.MessageHandler")).
 					Return(errors.New("Connect"))
-				c, err := newGCMClient(xm, hm, &Config{}, nil)
+				c, err := newFCMClient(xm, hm, &Config{}, nil)
 				Expect(err).To(HaveOccurred())
 				Expect(c).To(BeNil())
 				Expect(err).To(MatchError("Connect"))
@@ -81,11 +81,11 @@ var _ = Describe("GCM Client", func() {
 
 			It("should succeed", func() {
 				xm.On("ID").Return("id")
-				xm.On("Listen", mock.AnythingOfType("gcm.MessageHandler")).
+				xm.On("Listen", mock.AnythingOfType("fcm.MessageHandler")).
 					Return(nil)
-				c, err := newGCMClient(xm, hm, &Config{}, nil)
+				c, err := newFCMClient(xm, hm, &Config{}, nil)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(c).To(BeAssignableToTypeOf(&gcmClient{}))
+				Expect(c).To(BeAssignableToTypeOf(&fcmClient{}))
 				Expect(c.pingInterval).To(Equal(DefaultPingInterval))
 				Expect(c.pingTimeout).To(Equal(DefaultPingTimeout))
 				c.Lock()
@@ -99,12 +99,12 @@ var _ = Describe("GCM Client", func() {
 	Describe("listening", func() {
 		var (
 			xm *xmppCMock
-			c  *gcmClient
+			c  *fcmClient
 		)
 
 		BeforeEach(func() {
 			xm = new(xmppCMock)
-			c = &gcmClient{
+			c = &fcmClient{
 				xmppClient: xm,
 				cerr:       make(chan error),
 				senderID:   "sender id",
@@ -119,7 +119,7 @@ var _ = Describe("GCM Client", func() {
 
 		It("should fail on listen error", func() {
 			xm.On("ID").Return("id")
-			xm.On("Listen", mock.AnythingOfType("gcm.MessageHandler")).
+			xm.On("Listen", mock.AnythingOfType("fcm.MessageHandler")).
 				Return(errors.New("Listen"))
 			go c.monitorXMPP(false)
 			err := <-c.cerr
@@ -141,7 +141,7 @@ var _ = Describe("GCM Client", func() {
 			hm = HTTPMessage{To: "me"}
 			h = new(httpCMock)
 			x = new(xmppCMock)
-			c = &gcmClient{httpClient: h, xmppClient: x}
+			c = &fcmClient{httpClient: h, xmppClient: x}
 		})
 
 		AfterEach(func() {
@@ -187,12 +187,12 @@ var _ = Describe("GCM Client", func() {
 	Describe("closing", func() {
 		var (
 			x *xmppCMock
-			c *gcmClient
+			c *fcmClient
 		)
 
 		BeforeEach(func() {
 			x = new(xmppCMock)
-			c = &gcmClient{xmppClient: x}
+			c = &fcmClient{xmppClient: x}
 		})
 
 		AfterEach(func() {
@@ -247,12 +247,12 @@ var _ = Describe("GCM Client", func() {
 	Describe("handling upstream messages", func() {
 		var (
 			x *xmppCMock
-			c *gcmClient
+			c *fcmClient
 		)
 
 		BeforeEach(func() {
 			x = new(xmppCMock)
-			c = &gcmClient{xmppClient: x, cerr: make(chan error, 1)}
+			c = &fcmClient{xmppClient: x, cerr: make(chan error, 1)}
 		})
 
 		AfterEach(func() {
@@ -288,12 +288,12 @@ var _ = Describe("GCM Client", func() {
 	Describe("misc", func() {
 		var (
 			x *xmppCMock
-			c *gcmClient
+			c *fcmClient
 		)
 
 		BeforeEach(func() {
 			x = new(xmppCMock)
-			c = &gcmClient{xmppClient: x}
+			c = &fcmClient{xmppClient: x}
 		})
 
 		AfterEach(func() {

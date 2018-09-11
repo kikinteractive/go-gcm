@@ -1,5 +1,5 @@
-// Package gcm provides send and receive GCM functionality.
-package gcm
+// Package fcm provides send and receive FCM functionality.
+package fcm
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	httpAddress = "https://gcm-http.googleapis.com/gcm/send"
+	httpAddress = "https://fcm.googleapis.com/fcm/send"
 )
 
 // httpClient is an interface to stub the internal http.Client.
@@ -21,9 +21,9 @@ type httpClient interface {
 	Do(req *http.Request) (resp *http.Response, err error)
 }
 
-// gcmHTTP is a container for the GCM HTTP Server client.
-type gcmHTTP struct {
-	GCMURL     string
+// fcmHTTP is a container for the FCM HTTP Server client.
+type fcmHTTP struct {
+	FCMURL     string
 	apiKey     string
 	httpClient httpClient
 	debug      bool
@@ -32,10 +32,10 @@ type gcmHTTP struct {
 // Used to compute results for multicast messages with retries.
 type multicastResultsState map[string]*HTTPResult
 
-// newHTTPGCMClient creates a new client for handling GCM HTTP requests.
+// newHTTPFCMClient creates a new client for handling FCM HTTP requests.
 func newHTTPClient(apiKey string, debug bool) httpC {
-	return &gcmHTTP{
-		GCMURL:     httpAddress,
+	return &fcmHTTP{
+		FCMURL:     httpAddress,
 		apiKey:     apiKey,
 		httpClient: &http.Client{},
 		debug:      debug,
@@ -43,7 +43,7 @@ func newHTTPClient(apiKey string, debug bool) httpC {
 }
 
 // Send sends an HTTP message using exponential backoff, handling multicast replies.
-func (c *gcmHTTP) Send(m HTTPMessage) (*HTTPResponse, error) {
+func (c *fcmHTTP) Send(m HTTPMessage) (*HTTPResponse, error) {
 	targets, err := messageTargetAsStringsArray(m)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting target from message: %v", err)
@@ -52,7 +52,7 @@ func (c *gcmHTTP) Send(m HTTPMessage) (*HTTPResponse, error) {
 	var (
 		multicastID  int64
 		retryAfter   time.Duration
-		gcmResp      *HTTPResponse
+		fcmResp      *HTTPResponse
 		b            = newExponentialBackoff()
 		resultsState = make(multicastResultsState)
 		localTo      = make([]string, len(targets))
@@ -62,7 +62,7 @@ func (c *gcmHTTP) Send(m HTTPMessage) (*HTTPResponse, error) {
 	copy(localTo, targets)
 
 	for b.sendAnother() {
-		if gcmResp, retryAfter, err = sendHTTP(c.httpClient, c.GCMURL, c.apiKey, m, c.debug); err != nil {
+		if fcmResp, retryAfter, err = sendHTTP(c.httpClient, c.FCMURL, c.apiKey, m, c.debug); err != nil {
 			// Honor the Retry-After header if it is included in the response.
 			if retryAfter > 0 {
 				b.setMin(retryAfter)
@@ -71,11 +71,11 @@ func (c *gcmHTTP) Send(m HTTPMessage) (*HTTPResponse, error) {
 			}
 			return nil, err
 		}
-		if len(gcmResp.Results) > 0 {
-			multicastID = gcmResp.MulticastID
-			doRetry, toRetry, err := checkResults(gcmResp.Results, localTo, resultsState)
+		if len(fcmResp.Results) > 0 {
+			multicastID = fcmResp.MulticastID
+			doRetry, toRetry, err := checkResults(fcmResp.Results, localTo, resultsState)
 			if err != nil {
-				return gcmResp, fmt.Errorf("error checking GCM results: %v", err)
+				return fcmResp, fmt.Errorf("error checking FCM results: %v", err)
 			}
 			if doRetry {
 				// Honor the Retry-After header if it is included in the response.
@@ -96,10 +96,10 @@ func (c *gcmHTTP) Send(m HTTPMessage) (*HTTPResponse, error) {
 
 	// if it was multicast, reconstruct response in case there have been retries
 	if len(targets) > 1 {
-		gcmResp = buildRespForMulticast(targets, resultsState, multicastID)
+		fcmResp = buildRespForMulticast(targets, resultsState, multicastID)
 	}
 
-	return gcmResp, nil
+	return fcmResp, nil
 }
 
 // parseRetryAfter returns the duration to wait until the next retry attempt.
@@ -128,16 +128,16 @@ func parseRetryAfter(retryAfter string) (time.Duration, error) {
 	return 0, fmt.Errorf("cannot parse Retry-After header %s", retryAfter)
 }
 
-// sendHTTP sends a single request to GCM HTTP server and parses the response.
+// sendHTTP sends a single request to FCM HTTP server and parses the response.
 func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
-	debug bool) (gcmResp *HTTPResponse, retryAfter time.Duration, err error) {
+	debug bool) (fcmResp *HTTPResponse, retryAfter time.Duration, err error) {
 	var bs []byte
 	if bs, err = json.Marshal(m); err != nil {
 		return
 	}
 
 	if debug {
-		log.WithField("http request", string(bs)).Debug("gcm http request")
+		log.WithField("http request", string(bs)).Debug("fcm http request")
 	}
 
 	var req *http.Request
@@ -154,7 +154,7 @@ func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
 		return
 	}
 
-	gcmResp = &HTTPResponse{StatusCode: httpResp.StatusCode}
+	fcmResp = &HTTPResponse{StatusCode: httpResp.StatusCode}
 	retryAfter, err = parseRetryAfter(httpResp.Header.Get(http.CanonicalHeaderKey("Retry-After")))
 
 	// Read response. Valid response body is guaranteed to exist only with response status 200.
@@ -171,9 +171,9 @@ func sendHTTP(httpClient httpClient, URL string, apiKey string, m HTTPMessage,
 			log.WithFields(log.Fields{
 				"status": httpResp.StatusCode,
 				"body":   string(body),
-			}).Debug("gcm http reply")
+			}).Debug("fcm http reply")
 		}
-		err = json.Unmarshal(body, gcmResp)
+		err = json.Unmarshal(body, fcmResp)
 	}
 
 	return
@@ -216,12 +216,12 @@ func messageTargetAsStringsArray(m HTTPMessage) ([]string, error) {
 }
 
 // checkResults determines which errors can be retried in the multicast send.
-func checkResults(gcmResults []HTTPResult, recipients []string,
+func checkResults(fcmResults []HTTPResult, recipients []string,
 	resultsState multicastResultsState) (doRetry bool, toRetry []string, err error) {
 	doRetry = false
 	toRetry = []string{}
-	for i := 0; i < len(gcmResults); i++ {
-		result := gcmResults[i]
+	for i := 0; i < len(fcmResults); i++ {
+		result := fcmResults[i]
 		regID := recipients[i]
 		resultsState[regID] = &result
 		if result.Error != "" {
