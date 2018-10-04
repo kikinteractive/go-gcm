@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	httpAddress = "https://gcm-http.googleapis.com/gcm/send"
+	httpAddress = "https://fcm.googleapis.com/fcm/send"
 )
 
 // httpClient is an interface to stub the internal http.Client.
