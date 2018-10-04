@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/mattn/go-xmpp"
 	"github.com/pborman/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -41,9 +41,9 @@ const (
 	XMPPIQResult = "result"
 
 	// GCM service constants.
-	ccsHostProd = "fcm-xmpp.googleapis.com"
+	ccsHostProd = "gcm.googleapis.com"
 	ccsPortProd = "5235"
-	ccsHostDev  = "fcm-xmpp.googleapis.com"
+	ccsHostDev  = "gcm-preprod.googleapis.com"
 	ccsPortDev  = "5236"
 
 	// For CCS the min for exponential backoff has to be 1 sec
