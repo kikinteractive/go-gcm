@@ -109,7 +109,7 @@ func newXMPPClient(isSandbox bool, senderID string, apiKey string, debug bool) (
 		xmppAddress = net.JoinHostPort(ccsHostProd, ccsPortProd)
 	}
 
-	nc, err := xmpp.NewClient(xmppAddress, xmppUser(xmppHost, senderID), apiKey, debug)
+	nc, err := xmpp.NewClient(xmppAddress, xmppUser(senderID), apiKey, debug)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting gcm xmpp client: %v", err)
 	}
@@ -397,6 +397,6 @@ func (c *gcmXMPP) retryMessage(cm CCSMessage, h MessageHandler) {
 }
 
 // xmppUser generates an xmpp username from a sender ID.
-func xmppUser(xmppHost, senderID string) string {
-	return senderID + "@" + xmppHost
+func xmppUser(senderID string) string {
+	return senderID + "@gcm.googleapis.com"
 }
